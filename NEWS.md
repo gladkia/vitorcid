@@ -1,6 +1,7 @@
 ## vitorcid 0.0.8 - 2024-04-19
 * improve logic for get_vitae_r_package_entry
 * add r_packages as default entry in the entries for get_cv and get_cv_header
+* update tests for get_cv and get_cv_data
 
 ## vitorcid 0.0.7 - 2024-04-12
 * add new path to authentication orcid profile in vignettes
