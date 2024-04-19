@@ -116,7 +116,15 @@ get_vitae_r_package_entry <-
 
     # search Biocounductor
     fname <- paste0(pd$given_names, " ", pd$family_name)
-    bl <- suppressMessages(BiocPkgTools::biocPkgList())
+    
+    tryCatch (
+      bl <- suppressMessages(BiocPkgTools::biocPkgList()),
+        error = function(e) {
+          warning(print("BiocPkgTools::biocPkgList() do not response now"))
+          return(data.table::data.table())
+        }
+    )
+    
     m_idx <-
       union(grep(fname, bl$Author), grep(fname, bl$Maintainer))
     mp <- bl[m_idx, ]
@@ -137,19 +145,26 @@ get_vitae_r_package_entry <-
     } else {
       e_dt
     }
-
-    cp <-
-      pkgsearch::advanced_search(
-        Author = pd$given_names,
-        Author = pd$family_name,
-        size = 10 ^ 3
-      )
-    ccre <-
-      pkgsearch::advanced_search(
-        Maintainer = pd$given_names,
-        Maintainer = pd$family_name,
-        size = 10 ^ 3
-      )
+    
+    tryCatch({
+      cp <-
+        pkgsearch::advanced_search(
+          Author = pd$given_names,
+          Author = pd$family_name,
+          size = 10 ^ 3
+        )
+      ccre <-
+        pkgsearch::advanced_search(
+          Maintainer = pd$given_names,
+          Maintainer = pd$family_name,
+          size = 10 ^ 3
+        )
+    },
+    error = function(e) {
+      warning(print("pkgsearch::advanced_search is not available now"))
+      return(data.table::data.table())
+    })
+    
     cp$cre <- cp$package %in% ccre$package
     cp$where <-
       ifelse(cp$cre, "Author & maintainer (CRAN)", "Author (CRAN)")

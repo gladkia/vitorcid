@@ -1,3 +1,6 @@
+## vitorcid 0.0.8 - 2024-04-19
+* improve logic for get_vitae_r_package_entry
+
 ## vitorcid 0.0.7 - 2024-04-12
 * add new path to authentication orcid profile in vignettes
 * add function for choosing cv template
