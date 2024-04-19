@@ -81,15 +81,13 @@ test_that("get_cv_data works", {
   
   
   vcr::use_cassette("get_cv_data2", {
+    cd4 <- get_cv_data(orcid = "0000-0002-7059-6378")
     mockery::stub(
       where = get_cv_data,
       what = "pkgsearch::advanced_search",
       how = stop("unexpected API error occured"),
       depth = 3
     )
-    
-    cd4 <- get_cv_data(orcid = "0000-0002-7059-6378")
-    
     expect_error(cd4, "unexpected API error occured")
     })
 })
