@@ -121,7 +121,7 @@ get_vitae_r_package_entry <-
       bl <- suppressMessages(BiocPkgTools::biocPkgList())
       m_idx <-
         union(grep(fname, bl$Author), grep(fname, bl$Maintainer))
-      mp <- bl[m_idx,]
+      mp <- bl[m_idx, ]
       mp$where <-
         ifelse(
           grepl(fname, mp$Maintainer),
