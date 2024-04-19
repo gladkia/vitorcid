@@ -21,7 +21,7 @@ get_cv <-
            orcid = Sys.getenv("ORCID_ID"),
            output_type = c("Rmd", "pdf"),
            json_path = NULL,
-           etries = c("education", "employment", "r_package", "citation"),
+           entries = c("education", "employment", "r_package", "citation"),
            template = "vitae::awesomecv",
            template_args = NULL) {
     cvl <- get_cv_data(orcid = orcid, json_path = json_path, entries = entries)
