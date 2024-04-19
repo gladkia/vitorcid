@@ -113,38 +113,37 @@ get_vitae_r_package_entry <-
         when = character(),
         why = list()
       )
-
+    
     # search Biocounductor
     fname <- paste0(pd$given_names, " ", pd$family_name)
     
-    tryCatch(
-      bl <- suppressMessages(BiocPkgTools::biocPkgList()),
-        error = function(e) {
-          warning(print("BiocPkgTools::biocPkgList() do not response now"))
-          return(data.table::data.table())
-        }
-    )
-    
-    m_idx <-
-      union(grep(fname, bl$Author), grep(fname, bl$Maintainer))
-    mp <- bl[m_idx, ]
-    mp$where <-
-      ifelse(
-        grepl(fname, mp$Maintainer),
-        "Author & maintainer (Bioconductor)",
-        "Author (Bioconductor)"
-      )
-    bcp <- if (nrow(mp)) {
-      data.table::data.table(
-        what = mp$Title,
-        with = mp$Package,
-        where = mp$where,
-        when = mp$Version,
-        why = mp$Description
-      )
-    } else {
-      e_dt
-    }
+    tryCatch({
+      bl <- suppressMessages(BiocPkgTools::biocPkgList())
+      m_idx <-
+        union(grep(fname, bl$Author), grep(fname, bl$Maintainer))
+      mp <- bl[m_idx,]
+      mp$where <-
+        ifelse(
+          grepl(fname, mp$Maintainer),
+          "Author & maintainer (Bioconductor)",
+          "Author (Bioconductor)"
+        )
+      bcp <- if (nrow(mp)) {
+        data.table::data.table(
+          what = mp$Title,
+          with = mp$Package,
+          where = mp$where,
+          when = mp$Version,
+          why = mp$Description
+        )
+      } else {
+        e_dt
+      }
+    },
+    error = function(e) {
+      warning(print("BiocPkgTools::biocPkgList() do not response now"))
+      return(data.table::data.table())
+    })
     
     tryCatch({
       cp <-
@@ -159,37 +158,36 @@ get_vitae_r_package_entry <-
           Maintainer = pd$family_name,
           size = 10 ^ 3
         )
+      cp$cre <- cp$package %in% ccre$package
+      cp$where <-
+        ifelse(cp$cre, "Author & maintainer (CRAN)", "Author (CRAN)")
+      
+      ccp <- if (nrow(cp)) {
+        data.table::data.table(
+          what = cp$title,
+          with = cp$package,
+          where = cp$where,
+          when = as.character(cp$version),
+          why = cp$description
+        )
+      } else {
+        e_dt
+      }
+      pp <- rbind(bcp, ccp)
+      
+      vitae::detailed_entries(
+        pp,
+        what = pp$what,
+        with = pp$with,
+        where = pp$where,
+        when = pp$when,
+        why = why
+      )
     },
     error = function(e) {
       warning(print("pkgsearch::advanced_search is not available now"))
       return(data.table::data.table())
     })
-    
-    cp$cre <- cp$package %in% ccre$package
-    cp$where <-
-      ifelse(cp$cre, "Author & maintainer (CRAN)", "Author (CRAN)")
-
-    ccp <- if (nrow(cp)) {
-      data.table::data.table(
-        what = cp$title,
-        with = cp$package,
-        where = cp$where,
-        when = as.character(cp$version),
-        why = cp$description
-      )
-    } else {
-      e_dt
-    }
-    pp <- rbind(bcp, ccp)
-
-    vitae::detailed_entries(
-      pp,
-      what = pp$what,
-      with = pp$with,
-      where = pp$where,
-      when = pp$when,
-      why = why
-    )
   }
 
 #' @inheritParams get_vitae_entry
