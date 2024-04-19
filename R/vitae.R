@@ -117,7 +117,7 @@ get_vitae_r_package_entry <-
     # search Biocounductor
     fname <- paste0(pd$given_names, " ", pd$family_name)
     
-    tryCatch (
+    tryCatch(
       bl <- suppressMessages(BiocPkgTools::biocPkgList()),
         error = function(e) {
           warning(print("BiocPkgTools::biocPkgList() do not response now"))
