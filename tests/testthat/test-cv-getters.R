@@ -79,8 +79,21 @@ test_that("get_cv_data works", {
   
   expect_true(all(names(cd3) %in% c("pd", se)))
   
+  
+  vcr::use_cassette("get_cv_data2", {
+    mockery::stub(
+      where = get_cv_data,
+      what = "pkgsearch::advanced_search",
+      how = stop("unexpected API error occured"),
+      depth = 3
+    )
+    
+    cd4 <- get_cv_data(orcid = "0000-0002-7059-6378")
+    
+    expect_error(cd4, "unexpected API error occured")
+    })
 })
-
+  
 
 test_that("get_cv_works", {
   vcr::use_cassette("get_cv", {
@@ -104,5 +117,19 @@ test_that("get_cv_works", {
   })
   rmd_fpath <- paste0(out_path, ".Rmd")
   expect_true(file.exists(rmd_fpath))
+  
+  vcr::use_cassette("get_cv2", {
+    mockery::stub(
+      where = get_cv_data,
+      what = "pkgsearch::advanced_search",
+      how = stop("unexpected API error occured"),
+      depth = 3
+    )
+
+    cd2 <-
+      get_cv(orcid = "0000-0002-7059-6378")
+    
+    expect_error(cd2, "unexpected API error occured")
+  })
   
 })
