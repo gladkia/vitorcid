@@ -12,6 +12,7 @@ Description: The aim of the package is to facilitate the proces of creating CV, 
     is fetched from  CRAN and Bioconductor.
 Imports:
    BiocPkgTools,
+   BiocManager,
    checkmate,
    data.table,
    jsonlite,
