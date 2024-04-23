@@ -95,7 +95,7 @@ get_vitae_bib_entry <- function(orcid = Sys.getenv("ORCID_ID")) {
 #' @inheritParams get_vitae_entry
 #' @keywords .internal
 get_vitae_r_package_entry <-
-  function(orcid = Sys.getenv("ORCID_ID")) {
+  function(orcid = Sys.getenv("ORCID_ID"), bioc_version = BiocManager::version()) {
     pd <- get_personal_data(orcid)
 
     # sanitize
@@ -113,12 +113,40 @@ get_vitae_r_package_entry <-
         when = character(),
         why = list()
       )
+    # dummy dt for Bioconductor data (if BiocPkgTools failed)
+    bioc_warning <- sprintf(
+      "%s\n%s",
+      "The authorship of Bioconductor packages can not be verified. ",
+      "The `BiocPkgTools` service is unavailable now."
+    )
+    bioc_dummy_dt <-
+      data.table::data.table(
+        what = "No data available",
+        with = "BioConductor",
+        where = "No data available",
+        when = "No data available",
+        why = bioc_warning
+      )
+    # dummy dt for CRAN data (if pkgsearch failed)
+    cran_warning <- sprintf(
+      "%s\n%s",
+      "The authorship of packages from CRAN could not be verified. ",
+      "The `pkgsearch` service is unavailable now."
+    )
+    cran_dummy_dt <-
+      data.table::data.table(
+        what = "Data not available",
+        with = "CRAN",
+        where = "Data not available",
+        when = "Data not available",
+        why = cran_warning
+      )
     
     # search Biocounductor
     fname <- paste0(pd$given_names, " ", pd$family_name)
     
-    tryCatch({
-      bl <- suppressMessages(BiocPkgTools::biocPkgList())
+    bcp <- tryCatch({
+      bl <- suppressMessages(BiocPkgTools::biocPkgList(version = bioc_version))
       m_idx <-
         union(grep(fname, bl$Author), grep(fname, bl$Maintainer))
       mp <- bl[m_idx, ]
@@ -128,7 +156,7 @@ get_vitae_r_package_entry <-
           "Author & maintainer (Bioconductor)",
           "Author (Bioconductor)"
         )
-      bcp <- if (nrow(mp)) {
+      if (NROW(mp)) {
         data.table::data.table(
           what = mp$Title,
           with = mp$Package,
@@ -141,11 +169,11 @@ get_vitae_r_package_entry <-
       }
     },
     error = function(e) {
-      warning(print("BiocPkgTools::biocPkgList() do not response now"))
-      return(data.table::data.table())
+      warning(bioc_warning)
+      bioc_dummy_dt
     })
     
-    tryCatch({
+    ccp <- tryCatch({
       cp <-
         pkgsearch::advanced_search(
           Author = pd$given_names,
@@ -162,7 +190,7 @@ get_vitae_r_package_entry <-
       cp$where <-
         ifelse(cp$cre, "Author & maintainer (CRAN)", "Author (CRAN)")
       
-      ccp <- if (nrow(cp)) {
+      if (NROW(cp)) {
         data.table::data.table(
           what = cp$title,
           with = cp$package,
@@ -172,7 +200,12 @@ get_vitae_r_package_entry <-
         )
       } else {
         e_dt
-      }
+      }},
+    error = function(e) {
+      warning(cran_warning)
+      cran_dummy_dt
+    })
+      
       pp <- rbind(bcp, ccp)
       
       vitae::detailed_entries(
@@ -183,11 +216,6 @@ get_vitae_r_package_entry <-
         when = pp$when,
         why = why
       )
-    },
-    error = function(e) {
-      warning(print("pkgsearch::advanced_search is not available now"))
-      return(data.table::data.table())
-    })
   }
 
 #' @inheritParams get_vitae_entry
@@ -199,9 +227,9 @@ add_why <- function(e_dt, entry_type, why, json_path = NULL) {
     checkmate::assert_data_table(e_why)
     checkmate::assert_true("why" %in% names(e_why))
     checkmate::assert_true(any(c("put-code", "idx") %in% names(e_why)))
-    checkmate::assert_true(nrow(e_why) == nrow(e_dt))
+    checkmate::assert_true(NROW(e_why) == NROW(e_dt))
 
-    e_dt$idx <-  seq(nrow(e_dt))
+    e_dt$idx <-  seq(NROW(e_dt))
     if ("put-code" %in% names(e_why) && !("idx" %in% names(e_why))) {
       e_why$idx <-
         match(e_why[["put-code"]], e_dt[[paste0(entry_type, "-summary.put-code")]])
