@@ -78,18 +78,20 @@ test_that("get_cv_data works", {
   expect_true(all(names(cd2) %in% c("pd", se)))
   
   expect_true(all(names(cd3) %in% c("pd", se)))
-  
-  
+ 
   vcr::use_cassette("get_cv_data2", {
-    cd4 <- get_cv_data(orcid = "0000-0002-7059-6378")
-    mockery::stub(
-      where = get_cv_data,
-      what = "pkgsearch::advanced_search",
-      how = stop("unexpected API error occured"),
-      depth = 3
-    )
-    expect_error(cd4, "unexpected API error occured")
-    })
+  timeout_bak <- getOption("timeout") 
+  options(timeout = 4)
+  Sys.setenv(R_PKG_SEARCH_SERVER = "search.r-pkg.org:4321")
+  cd4 <- suppressWarnings(get_cv_data(orcid = "0000-0002-7059-6378"))
+  on.exit({
+    options(timeout = timeout_bak)
+    Sys.unsetenv("R_PKG_SEARCH_SERVER")
+  })
+  })
+  expect_true(any(cd4$r_package$what %in% "Data not available"))
+  expect_true(any(cd4$r_package$with %in% "CRAN"))
+  expect_true(any(grepl("service is unavailable now", cd4$r_package$why)))
 })
   
 
@@ -117,17 +119,16 @@ test_that("get_cv_works", {
   expect_true(file.exists(rmd_fpath))
   
   vcr::use_cassette("get_cv2", {
-    mockery::stub(
-      where = get_cv_data,
-      what = "pkgsearch::advanced_search",
-      how = stop("unexpected API error occured"),
-      depth = 3
-    )
-
-    cd2 <-
-      get_cv(orcid = "0000-0002-7059-6378")
-    
-    expect_error(cd2, "unexpected API error occured")
+    timeout_bak <- getOption("timeout")
+    options(timeout = 4)
+    Sys.setenv(R_PKG_SEARCH_SERVER = "search.r-pkg.org:4321")
+    on.exit({
+      options(timeout = timeout_bak)
+      Sys.unsetenv("R_PKG_SEARCH_SERVER")
+    })
+    pdf_path <-
+      suppressWarnings(get_cv(orcid = "0000-0002-7059-6378"))
   })
+  expect_true(file.exists(pdf_path))
   
 })
