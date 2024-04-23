@@ -128,6 +128,11 @@ jobs:
           #&& apt-get -f -y install
 
           #sysreqs=$(Rscript -e 'cat("apt-get update -y && apt-get install -y", paste(gsub("apt-get install -y ", "", remotes::system_requirements("ubuntu", "20.04")), collapse = " "))')
+          apt-get update && apt-get -y install texlive-latex-extra texlive-fonts-extra texlive-bibtex-extra
+          Rscript -e 'install.packages("pandoc")'
+          Rscript -e 'pandoc::pandoc_install("3.1.12.2")'
+          Rscript -e 'pandoc::pandoc_activate(version = "3.1.12.2",rmarkdown = TRUE)'
+
           #echo $sysreqs
           #sudo -s eval "$sysreqs"
       
